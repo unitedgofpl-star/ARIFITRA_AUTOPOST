@@ -1,0 +1,63 @@
+{
+ "agents": {
+  "sinta": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "bagas": {
+   "state": "on",
+   "text": "Meriset topik",
+   "at": "2026-11-28T06:38+09:00"
+  },
+  "nadia": {
+   "state": "on",
+   "text": "Meriset topik",
+   "at": "2026-11-28T06:38+09:00"
+  },
+  "rizky": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "ratna": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "dewi": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "yoga": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "laras": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "fajar": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "maya": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "hendra": {
+   "state": "idle",
+   "text": "Siaga"
+  },
+  "putri": {
+   "state": "idle",
+   "text": "Siaga"
+  }
+ },
+ "log": [
+  {
+   "at": "28/11 06:38",
+   "text": "Produksi 1128-0638 dimulai"
+  }
+ ],
+ "updated": "2026-11-28T06:38:40+09:00",
+ "queue": [],
+ "drafts": []
+}
