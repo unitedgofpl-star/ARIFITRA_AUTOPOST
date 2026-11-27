@@ -1,0 +1,29 @@
+name: Perpanjang Token
+
+on:
+  schedule:
+    - cron: "17 2 1,15 * *"   # tanggal 1 dan 15 tiap bulan; token Meta berlaku sekitar 60 hari
+  workflow_dispatch:
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Perpanjang token Instagram & Threads, simpan ulang ke Secrets
+        env:
+          IG_TOKEN: ${{ secrets.IG_TOKEN }}
+          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -e
+          if [ -n "$IG_TOKEN" ]; then
+            NEW=$(curl -sf "https://graph.instagram.com/refresh_access_token?grant_type=ig_refresh_token&access_token=$IG_TOKEN" | jq -r .access_token)
+            echo "::add-mask::$NEW"
+            [ -n "$NEW" ] && [ "$NEW" != "null" ] && gh secret set IG_TOKEN --repo "$REPO" --body "$NEW" && echo "Token Instagram diperpanjang"
+          fi
+          if [ -n "$THREADS_TOKEN" ]; then
+            NEW=$(curl -sf "https://graph.threads.net/refresh_access_token?grant_type=th_refresh_token&access_token=$THREADS_TOKEN" | jq -r .access_token)
+            echo "::add-mask::$NEW"
+            [ -n "$NEW" ] && [ "$NEW" != "null" ] && gh secret set THREADS_TOKEN --repo "$REPO" --body "$NEW" && echo "Token Threads diperpanjang"
+          fi
