@@ -1,21 +1,22 @@
 name: Bot Telegram Kantor
 
+# Dibangunkan oleh Cloudflare Worker setiap kali Anda mengirim pesan ke bot.
 on:
-  schedule:
-    - cron: "*/5 * * * *"   # bot hidup ±5 menit per putaran, lalu disambung putaran berikutnya
   workflow_dispatch:
+    inputs:
+      update:
+        description: "Pesan Telegram (diisi otomatis oleh Cloudflare; kosongkan untuk mode polling)"
+        required: false
+        default: ""
 
 permissions:
   contents: write
-
-concurrency:
-  group: robot-kantor
-  cancel-in-progress: false
+  actions: write
 
 jobs:
   bot:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -27,6 +28,8 @@ jobs:
           git config user.email "kantor-asn-go-digital@users.noreply.github.com"
       - name: Jalankan bot
         env:
+          UPDATE_JSON: ${{ github.event.inputs.update }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_OWNER_ID: ${{ secrets.TELEGRAM_OWNER_ID }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -35,12 +38,5 @@ jobs:
           CLAUDE_MODEL_BIG: ${{ vars.CLAUDE_MODEL_BIG }}
           GEMINI_MODEL: ${{ vars.GEMINI_MODEL }}
           PAGES_URL: ${{ vars.PAGES_URL }}
-          GRAPH_VERSION: ${{ vars.GRAPH_VERSION }}
-          IG_USER_ID: ${{ secrets.IG_USER_ID }}
-          IG_TOKEN: ${{ secrets.IG_TOKEN }}
-          THREADS_USER_ID: ${{ secrets.THREADS_USER_ID }}
-          THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
-          FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
-          FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
-          RUN_SECONDS: "290"
+          RUN_SECONDS: "280"
         run: python bot/telegram_bot.py
