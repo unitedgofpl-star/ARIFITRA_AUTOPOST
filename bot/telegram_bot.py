@@ -150,7 +150,7 @@ def git_sync(msg):
     if os.environ.get("NO_GIT") == "1":
         return
     sh = lambda *a: subprocess.run(list(a), cwd=ROOT, capture_output=True, text=True)
-    sh("git", "add", "-A", "drafts", "queue", "state")
+    sh("git", "add", "-A", *[d for d in ("drafts", "queue", "state") if (ROOT / d).exists()])
     if sh("git", "diff", "--cached", "--quiet").returncode == 0:
         return
     sh("git", "commit", "-m", msg)
@@ -288,19 +288,22 @@ def parse_when(parts):
 
 
 def run_publish(manual=False):
-    try:
-        ev = publish.run()
-    except Exception as e:
+    """Bot tidak memposting sendiri (mencegah posting ganda); ia memanggil workflow Robot Posting."""
+    tok = os.environ.get("GITHUB_TOKEN", "").strip()
+    if not tok:
         if manual:
-            send(f"Robot posting belum bisa jalan: {e}")
+            send("GITHUB_TOKEN tidak tersedia; jalankan Robot Posting dari tab Actions.")
         return
-    if ev:
-        for f, plat, ok, msg in ev:
-            send(("Terbit" if ok else "GAGAL terbit") + f" di {plat}: {f}" + ("" if ok else f"\n{msg}\nAkan dicoba lagi otomatis."))
-            log(("Terbit " if ok else "Gagal ") + f"{plat}: {f}")
-        setag(["yoga", "laras", "fajar"], "done", "Baru terbit"); flush("Catat status posting")
-    elif manual:
-        send("Tidak ada konten yang jatuh tempo.")
+    req = urllib.request.Request(f"https://api.github.com/repos/{REPO}/actions/workflows/publish.yml/dispatches",
+                                 data=json.dumps({"ref": "main", "inputs": {"dry_run": "0"}}).encode(), method="POST",
+                                 headers={"authorization": f"Bearer {tok}", "accept": "application/vnd.github+json", "content-type": "application/json"})
+    try:
+        urllib.request.urlopen(req, timeout=30)
+        setag(["yoga", "laras", "fajar"], "on", "Menerbitkan")
+        if manual:
+            send("Robot posting dijalankan. Hasilnya dikirim ke sini dalam ±1–2 menit.")
+    except urllib.error.HTTPError as e:
+        send(f"Gagal menjalankan Robot Posting (kode {e.code}). Pastikan telegram.yml punya izin actions: write.")
 
 HELP = """Kantor ASN Go Digital — perintah:
 
@@ -400,41 +403,62 @@ def handle_callback(cb):
         shutil.rmtree(draft_dir(did)); log(f"Draf {did} dibuang"); flush("Buang draf"); send("Draf dibuang.")
 
 
+def process(u):
+    if "callback_query" in u:
+        return handle_callback(u["callback_query"])
+    m = u.get("message")
+    if not m:
+        return
+    if not OWNER:
+        tg("sendMessage", {"chat_id": m["chat"]["id"], "text": f"Bot belum dikunci. Chat ID Anda: {m['chat']['id']}\nSimpan angka ini sebagai secret TELEGRAM_OWNER_ID di GitHub."})
+        return
+    if str(m["chat"]["id"]) != OWNER:
+        return
+    handle_message(m)
+
+
+def safe(u):
+    try:
+        process(u)
+    except Exception as e:
+        traceback.print_exc()
+        for a in office["agents"].values():
+            if a.get("state") == "on":
+                a.update(state="idle", text="Terkendala")
+        send(f"Maaf, pekerjaan terhenti: {e}")
+
+
 def main():
     if not TOKEN:
         sys.exit("TELEGRAM_BOT_TOKEN belum diisi.")
     STATE.mkdir(exist_ok=True)
+    upd = os.environ.get("UPDATE_JSON", "").strip()
+    if upd:  # mode utama: dibangunkan Cloudflare untuk satu pesan
+        u = json.loads(upd)
+        print("Memproses pesan", u.get("update_id"))
+        safe(u)
+        if dirty:
+            flush()
+        git_sync("Kantor: proses pesan Telegram")
+        return
+    # mode cadangan: long polling (hanya bila webhook Cloudflare belum dipasang)
+    me = tg("getMe")
+    if not me:
+        sys.exit("Token Telegram ditolak. Salin ulang token dari @BotFather ke secret TELEGRAM_BOT_TOKEN.")
+    print(f"Bot @{me.get('username')} berjalan (mode polling).")
     bp = STATE / "bot.json"
     st = json.loads(bp.read_text(encoding="utf-8")) if bp.exists() else {"offset": 0}
     end = time.time() + RUN_SECONDS
-    last_pub = 0
     while time.time() < end - 8:
-        if OWNER and time.time() - last_pub > 60:
-            run_publish(); last_pub = time.time()
         ups = tg("getUpdates", {"offset": st["offset"], "timeout": int(min(25, max(1, end - time.time() - 8))),
-                                "allowed_updates": ["message", "callback_query"]}, timeout=40) or []
+                                "allowed_updates": ["message", "callback_query"]}, timeout=40)
+        if ups is None:
+            print("getUpdates gagal (token salah, atau webhook Cloudflare sudah aktif — itu normal).")
+            break
         for u in ups:
             st["offset"] = u["update_id"] + 1
             bp.write_text(json.dumps(st), encoding="utf-8")
-            try:
-                if "callback_query" in u:
-                    handle_callback(u["callback_query"])
-                    continue
-                m = u.get("message")
-                if not m:
-                    continue
-                if not OWNER:
-                    tg("sendMessage", {"chat_id": m["chat"]["id"], "text": f"Bot belum dikunci. Chat ID Anda: {m['chat']['id']}\nSimpan angka ini sebagai secret TELEGRAM_OWNER_ID di GitHub."})
-                    continue
-                if str(m["chat"]["id"]) != OWNER:
-                    continue
-                handle_message(m)
-            except Exception as e:
-                traceback.print_exc()
-                for a in office["agents"].values():
-                    if a.get("state") == "on":
-                        a.update(state="idle", text="Terkendala")
-                send(f"Maaf, pekerjaan terhenti: {e}")
+            safe(u)
         if dirty:
             flush()
     bp.write_text(json.dumps(st), encoding="utf-8")
