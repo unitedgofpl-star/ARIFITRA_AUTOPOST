@@ -15,7 +15,7 @@ window.makeOffice3D = function (host, AGENTS, opt) {
     const st = document.createElement('style'); st.id = 'o3css';
     st.textContent = '.o3l{position:absolute;left:0;top:0;transform:translate(-50%,-100%);text-align:center;pointer-events:auto;cursor:pointer;white-space:nowrap;font-family:Montserrat,system-ui,sans-serif;will-change:transform}' +
       '.o3b{display:inline-block;font-size:11px;font-weight:800;padding:2px 8px;border-radius:9px;background:#e9edf5;color:#55607a;box-shadow:0 2px 8px #0002;max-width:150px;overflow:hidden;text-overflow:ellipsis}' +
-      '.o3l.on .o3b{background:#ffc52a;color:#0d2b66}.o3l.done .o3b{background:#d9f3e2;color:#0d5a2a}' +
+      '.o3l.on .o3b{background:#ffc52a;color:#0d2b66}.o3l.amb .o3b{background:#eef1f6e6;color:#5c6782;font-style:italic;font-weight:700}.o3l.talk .o3b{background:#fff;color:#0d2b66;border:1.5px solid #0d2b66}.o3l.done .o3b{background:#d9f3e2;color:#0d5a2a}' +
       '.o3n{display:block;margin-top:3px;font-size:11.5px;font-weight:800;color:#fff;background:#0d2b66d9;border-radius:6px;padding:1px 7px}' +
       '.o3r{position:absolute;left:0;top:0;transform:translate(-50%,-50%);font:800 11px Montserrat,system-ui,sans-serif;color:#0d2b66;background:#ffffffd9;border:1.5px solid #0d2b66;border-radius:6px;padding:1px 7px;pointer-events:none;white-space:nowrap}';
     document.head.appendChild(st);
@@ -47,6 +47,21 @@ window.makeOffice3D = function (host, AGENTS, opt) {
   const font = (w, s) => w + ' ' + s + 'px Montserrat, Arial, sans-serif';
   const sign = (w, h, draw) => new T.MeshBasicMaterial({ map: tex(w, h, draw) });
 
+  /* ---------- peta jalan: 0 bebas, 1 tepi perabot, 2 perabot, 3 dinding ---------- */
+  const CS = 0.4, GX = -20.6, GZ = -10.6, NX = Math.ceil(41.2 / CS), NZ = Math.ceil(21.2 / CS);
+  const grid = new Uint8Array(NX * NZ);
+  const ci = x => Math.max(0, Math.min(NX - 1, Math.floor((x - GX) / CS))), cj = z => Math.max(0, Math.min(NZ - 1, Math.floor((z - GZ) / CS)));
+  function block(x0, z0, x1, z1, kind, pad) {
+    kind = kind || 2; pad = pad == null ? 0.3 : pad;
+    const a = Math.min(x0, x1), b = Math.max(x0, x1), c = Math.min(z0, z1), d = Math.max(z0, z1);
+    for (let i = 0; i < NX; i++) { const x = GX + (i + 0.5) * CS; if (x < a - pad || x > b + pad) continue;
+      for (let j = 0; j < NZ; j++) { const z = GZ + (j + 0.5) * CS; if (z < c - pad || z > d + pad) continue;
+        const core = x >= a - 0.08 && x <= b + 0.08 && z >= c - 0.08 && z <= d + 0.08, k = j * NX + i;
+        grid[k] = Math.max(grid[k], core ? kind : 1); } }
+  }
+  function blockEl(cx, cz, rx, rz) { for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) { const x = GX + (i + 0.5) * CS - cx, z = GZ + (j + 0.5) * CS - cz, q = x * x / (rx * rx) + z * z / (rz * rz), k = j * NX + i; if (q <= 1) grid[k] = Math.max(grid[k], q < 0.6 ? 2 : 1); } }
+  block(-21, 10.15, 21, 11, 3, 0);
+
   /* ---------- gedung ---------- */
   B(41.4, 0.5, 21.4, M(0x3a4252), 0, -0.25, 0);
   const wood = tex(256, 256, (c) => { c.fillStyle = '#e7d7b8'; c.fillRect(0, 0, 256, 256); for (let i = 0; i < 8; i++) { c.fillStyle = i % 2 ? '#e1cfad' : '#ead9bb'; c.fillRect(0, i * 32, 256, 31); c.fillStyle = '#cdb994'; c.fillRect((i * 97) % 256, i * 32, 2, 31); } });
@@ -72,8 +87,8 @@ window.makeOffice3D = function (host, AGENTS, opt) {
   }
   const wallM = M(0xf4f0e7), glassM = new T.MeshStandardMaterial({ color: 0xbfe3ff, transparent: true, opacity: 0.32, roughness: 0.1 });
   const WH = 2.2;
-  const wx = (x0, x1, z, h, m) => B(Math.abs(x1 - x0), h, 0.2, m || wallM, (x0 + x1) / 2, h / 2, z);
-  const wz = (z0, z1, x, h, m) => B(0.2, h, Math.abs(z1 - z0), m || wallM, x, h / 2, (z0 + z1) / 2);
+  const wx = (x0, x1, z, h, m) => (block(x0, z - 0.1, x1, z + 0.1, 3), B(Math.abs(x1 - x0), h, 0.2, m || wallM, (x0 + x1) / 2, h / 2, z));
+  const wz = (z0, z1, x, h, m) => (block(x - 0.1, z0, x + 0.1, z1, 3), B(0.2, h, Math.abs(z1 - z0), m || wallM, x, h / 2, (z0 + z1) / 2));
   wx(-20.6, 20.6, -10.3, 3.4);
   wz(-10.4, 10.2, -20.4, WH); wz(-10.4, 10.2, 20.4, WH);
   const winM = new T.MeshStandardMaterial({ color: 0xa9d8f7, emissive: 0x6fb8ea, emissiveIntensity: 0.35, roughness: 0.2 });
@@ -110,6 +125,9 @@ window.makeOffice3D = function (host, AGENTS, opt) {
   board(1.2, 0.45, (c, w, h) => { c.fillStyle = '#ffc52a'; c.fillRect(0, 0, w, h); c.fillStyle = '#0d2b66'; c.font = font(900, h * 0.6); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('LT. 2', w / 2, h / 2); }, -17.05, 2.35, 0.17);
   board(3.2, 0.7, (c, w, h) => { c.fillStyle = '#0d2b66'; c.fillRect(0, 0, w, h); c.fillStyle = '#ffc52a'; c.font = font(900, h * 0.42); c.textAlign = 'center'; c.textBaseline = 'middle'; c.fillText('ASN GO DIGITAL', w / 2, h / 2); }, -13.2, 1.8, 0.17);
   B(2.2, 0.45, 0.85, M(0x0d2b66), -12.8, 0.32, 8.3); B(2.2, 0.55, 0.2, M(0x0d2b66), -12.8, 0.7, 8.75); B(0.9, 0.04, 0.6, M(0xffc52a), -14.6, 0.45, 8.2);
+  block(-19.2, -9.97, -16.8, -9.5); block(-11.4, -9.5, -11.2, -9.3); blockEl(16.5, -5, 2.5, 1.45);
+  block(13.2, 0.17, 17.8, 0.93); block(18.92, 0.2, 19.88, 1.0); block(-13.9, 7.87, -11.7, 8.85); block(-15.05, 7.9, -14.15, 8.5);
+  [[19.3, -9.2], [-19.2, -1.0], [5.2, -0.9], [12.3, 9.2], [-10.8, 9.2]].forEach(([x, z]) => block(x - 0.3, z - 0.3, x + 0.3, z + 0.3));
 
   /* ---------- karyawan ---------- */
   const agents = {}, pickables = [];
@@ -139,13 +157,18 @@ window.makeOffice3D = function (host, AGENTS, opt) {
     if (a.g) for (const sx of [-1, 1]) { const g = new T.Mesh(new T.TorusGeometry(0.06, 0.012, 6, 16), dark); g.position.set(sx * 0.09, 1.82, ez + 0.03); p.add(g); }
     return arms;
   }
+  const AMB = { sinta: ['Cek jadwal tayang', 'Menyapa tamu'], bagas: ['Membaca JDIH', 'Mencatat regulasi'], nadia: ['Mencoba tools AI', 'Riset tren AI'], rizky: ['Corat-coret hook', 'Menulis draf'], ratna: ['Memeriksa ejaan', 'Mengecek fakta'], dewi: ['Sketsa desain', 'Memilih palet'], yoga: ['Memantau Instagram', 'Riset hashtag'], laras: ['Membaca utas Threads'], fajar: ['Cek grup FB desa'], maya: ['Membaca komentar'], hendra: ['Cek lynk.id', 'Menyusun promo'], putri: ['Membaca insight', 'Update laporan'] };
+  const AMB0 = ['Fokus kerja', 'Mengetik', 'Membaca berita desa', 'Merapikan file', 'Minum air putih'];
+  const TALK = ['Ide konten besok apa ya?', 'Coba angkat soal BUMDes', 'Kopi dulu, baru lanjut', 'Carousel kemarin bagus', 'Nanti saya cek faktanya', 'Siap, saya bantu desain', 'Threads lagi ramai bahas AI', 'Jangan lupa jadwal tayang', 'Mantap, gas!', 'Setuju, kita rapatkan', 'Regulasinya sudah dicek?', 'Hook-nya kurang nendang', 'Warna navy-kuning cocok', 'Komentar kemarin banyak'];
   const by = {}; AGENTS.forEach(a => (by[a.room] = by[a.room] || []).push(a));
+  const pick = arr => arr[Math.floor(Math.random() * arr.length)], rnd = (a, b) => a + Math.random() * (b - a);
   for (const room in by) {
     const r = RM[room]; if (!r) continue; const list = by[room];
     list.forEach((a, i) => {
       const x = r.x + r.w * (i + 0.5) / list.length, zd = r.z + r.d * 0.56;
       const g = new T.Group(); g.position.set(x, 0, zd); S.add(g); g.userData.id = a.id;
       const dw = a.hero ? 2.6 : 2.0, top = a.hero ? 0x5a3a22 : 0xa8784a;
+      block(x - dw / 2, zd - 0.5, x + dw / 2, zd + 0.5);
       B(dw, 0.1, 1.0, M(top), 0, 0.92, 0, g);
       B(0.08, 0.88, 0.9, M(0x6b4a2c), -dw / 2 + 0.06, 0.45, 0, g); B(0.08, 0.88, 0.9, M(0x6b4a2c), dw / 2 - 0.06, 0.45, 0, g);
       B(dw - 0.2, 0.5, 0.06, M(a.room === 'lobby' ? 0x0d2b66 : 0x8a5f37), 0, 0.62, 0.46, g);
@@ -156,21 +179,149 @@ window.makeOffice3D = function (host, AGENTS, opt) {
       B(0.24, 0.02, 0.34, M(0xffffff), -0.62, 0.985, 0.05, g);
       C(0.05, 0.05, 0.12, M(0xd8232a), 0.65, 1.03, 0.05, g);
       const lampM = new T.MeshStandardMaterial({ color: 0x777777, emissive: 0x000000 });
-      C(0.03, 0.03, 0.42, M(0x2b3245), dw / 2 - 0.25, 1.18, -0.3, g); const bulb = Sp(0.09, lampM, dw / 2 - 0.25, 1.42, -0.3, g);
-      const pp = new T.Group(); pp.position.set(0, 0, -0.85); g.add(pp);
-      chair(0, -0.05, a.hero ? 0x101820 : 0x2b3245, pp);
-      const arms = person(a, pp);
+      C(0.03, 0.03, 0.42, M(0x2b3245), dw / 2 - 0.25, 1.18, -0.3, g); Sp(0.09, lampM, dw / 2 - 0.25, 1.42, -0.3, g);
+      chair(0, -0.9, a.hero ? 0x101820 : 0x2b3245, g);
       const ringM = new T.MeshBasicMaterial({ color: 0xffc52a, transparent: true, opacity: 0, depthWrite: false });
       const ring = new T.Mesh(new T.RingGeometry(0.62, 0.8, 40), ringM); ring.rotation.x = -Math.PI / 2; ring.position.set(0, 0.1, -0.85); g.add(ring);
-      const head = new T.Vector3(); const el = document.createElement('div'); el.className = 'o3l';
+      const root = new T.Group(); root.position.set(x, 0, zd - 0.85); S.add(root); root.userData.id = a.id;
+      const pants = M(0x2b2f3a), shoe = M(0x161616), legs = [];
+      for (const sx of [-1, 1]) { const piv = new T.Group(); piv.position.set(sx * 0.15, 0.75, 0.02); root.add(piv); C(0.11, 0.1, 0.72, pants, 0, -0.36, 0, piv); B(0.18, 0.08, 0.3, shoe, 0, -0.76, 0.06, piv); legs.push(piv); }
+      const arms = person(a, root);
+      const el = document.createElement('div'); el.className = 'o3l';
       const bub = document.createElement('span'); bub.className = 'o3b'; bub.textContent = a.hero ? 'Memimpin' : 'Siaga';
       const nm = document.createElement('span'); nm.className = 'o3n'; nm.textContent = a.n;
       el.append(bub, nm); el.addEventListener('click', () => opt.onPick && opt.onPick(a.id)); lay.appendChild(el);
-      agents[a.id] = { g, pp, arms, kb, lampM, ringM, el, bub, head, state: 'idle', ph: Math.random() * 6 };
-      pickables.push(g);
+      agents[a.id] = { a, g, root, legs, arms, kb, lampM, ringM, el, bub, head: new T.Vector3(), hero: !!a.hero,
+        seat: { x, z: zd - 0.85 }, pose: 0, poseT: 0, mode: 'seat', path: [], speed: 1.5, arrive: null, walkPh: 0, walkTxt: '',
+        status: 'idle', taskText: '', doneUntil: 0, next: 4 + Math.random() * 14, act: null, actUntil: 0, talk: null, spot: null,
+        amb: pick((AMB[a.id] || []).concat(AMB0)), shown: '', cls: '', ph: Math.random() * 6 };
+      pickables.push(g, root);
     });
   }
   const roomLabels = Object.keys(RM).map(k => { const r = RM[k], el = document.createElement('div'); el.className = 'o3r'; el.textContent = r.n; lay.appendChild(el); return { el, v: r.z < 0 ? new T.Vector3(r.x + r.w / 2, 3.75, -10.3) : new T.Vector3(r.x + r.w / 2, 0.15, r.z + r.d - 0.55) }; });
+
+  /* ---------- jalan kaki: A* di atas peta ---------- */
+  const COST = [0, 5, 22, Infinity];
+  function findPath(sx, sz, tx, tz) {
+    const si = ci(sx), sj = cj(sz), ti = ci(tx), tj = cj(tz), N = NX * NZ, s0 = sj * NX + si, t0 = tj * NX + ti;
+    const gs = new Float32Array(N).fill(1e9), came = new Int32Array(N).fill(-1), closed = new Uint8Array(N), heap = [];
+    const push = (k, f) => { heap.push([f, k]); let n = heap.length - 1; while (n) { const p = (n - 1) >> 1; if (heap[p][0] <= heap[n][0]) break; [heap[p], heap[n]] = [heap[n], heap[p]]; n = p; } };
+    const pop = () => { const top = heap[0], last = heap.pop(); if (heap.length) { heap[0] = last; let n = 0; for (;;) { const l = 2 * n + 1, rr = l + 1; let m = n; if (l < heap.length && heap[l][0] < heap[m][0]) m = l; if (rr < heap.length && heap[rr][0] < heap[m][0]) m = rr; if (m === n) break; [heap[m], heap[n]] = [heap[n], heap[m]]; n = m; } } return top; };
+    const h = (i, j) => { const dx = Math.abs(i - ti), dz = Math.abs(j - tj); return Math.max(dx, dz) + 0.414 * Math.min(dx, dz); };
+    const cost = (i, j) => { if (i < 0 || j < 0 || i >= NX || j >= NZ) return Infinity; const k = j * NX + i; if (k === t0 || k === s0) return 0; return COST[grid[k]]; };
+    gs[s0] = 0; push(s0, h(si, sj)); let found = false, it = 0;
+    while (heap.length && it++ < 30000) {
+      const k = pop()[1]; if (closed[k]) continue; closed[k] = 1; if (k === t0) { found = true; break; }
+      const i = k % NX, j = (k - i) / NX;
+      for (let di = -1; di <= 1; di++) for (let dj = -1; dj <= 1; dj++) {
+        if (!di && !dj) continue; const ni = i + di, nj = j + dj, c = cost(ni, nj); if (c === Infinity) continue;
+        if (di && dj && (cost(i + di, j) === Infinity || cost(i, j + dj) === Infinity)) continue;
+        const nk = nj * NX + ni, ng = gs[k] + (di && dj ? 1.414 : 1) * (1 + c);
+        if (ng < gs[nk]) { gs[nk] = ng; came[nk] = k; push(nk, ng + h(ni, nj)); }
+      }
+    }
+    if (!found) return [[tx, tz]];
+    const pts = []; for (let k = t0; k !== -1; k = came[k]) { const i = k % NX, j = (k - i) / NX; pts.push([GX + (i + 0.5) * CS, GZ + (j + 0.5) * CS]); }
+    pts.reverse(); pts[0] = [sx, sz]; pts.push([tx, tz]);
+    const out = []; let a = 0;
+    while (a < pts.length - 1) { let b = pts.length - 1; while (b > a + 1 && !los(pts[a], pts[b])) b--; out.push(pts[b]); a = b; }
+    return out;
+  }
+  function los(p, q) { const d = Math.hypot(q[0] - p[0], q[1] - p[1]), n = Math.ceil(d / 0.15); for (let k = 1; k < n; k++) { const x = p[0] + (q[0] - p[0]) * k / n, z = p[1] + (q[1] - p[1]) * k / n; if (grid[cj(z) * NX + ci(x)] > 1) return false; if (grid[cj(z) * NX + ci(x)] === 1 && k > 3 && k < n - 3) return false; } return true; }
+
+  /* ---------- kehidupan kantor ---------- */
+  const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const taken = new Set();
+  const release = A => { if (A.spot) taken.delete(A.spot); A.spot = null; };
+  const reserve = (A, k) => { release(A); A.spot = k; taken.add(k); };
+  const spots = (list, pre, rot, sit, txt, walk) => list.map((p, i) => ({ k: pre + i, x: p[0], z: p[1], rot: typeof rot === 'function' ? rot(p) : rot, sit, txt, walk }));
+  const COFFEE = spots([[14.1, 1.6], [15.1, 1.6], [16.1, 1.6], [17.1, 1.6]], 'kopi', Math.PI, false, 'Ngopi sebentar', 'Ke pantry').concat(spots([[18.9, 1.8]], 'kulkas', Math.PI, false, 'Ambil minum', 'Ke pantry'));
+  const WINDOW = spots([[-15, -9.1], [-6, -9.1], [2.5, -9.1], [10.5, -9.1], [18.3, -8.7]], 'jendela', Math.PI, false, 'Melihat pemandangan', 'Ke jendela');
+  const MEET = spots([...Array(8)].map((_, i) => { const a = i / 8 * Math.PI * 2; return [16.5 + Math.cos(a) * 2.9, -5 + Math.sin(a) * 1.75]; }), 'rapat', p => Math.atan2(16.5 - p[0], -5 - p[1]), true, 'Diskusi di ruang rapat', 'Ke ruang rapat');
+  const SOFA = spots([[-13.4, 8.15], [-12.2, 8.15]], 'sofa', Math.PI, true, 'Istirahat sejenak', 'Ke lobi');
+  const CHAT = [[-6, 8.7], [2.5, 8.7], [9.5, 9.0], [-15.8, 2.2], [-4, -1.9], [2.5, -1.9], [9.5, -1.6], [16.5, -8.4], [-16, -2]];
+  const freeOf = list => { const f = list.filter(s => !taken.has(s.k)); return f.length ? pick(f) : null; };
+  function goTo(A, x, z, arrive, fast, txt) { release(A); A.path = findPath(A.root.position.x, A.root.position.z, x, z); A.arrive = arrive; A.speed = fast ? 2.7 : 1.45; A.mode = 'walk'; A.poseT = 1; A.walkTxt = txt || 'Berjalan'; }
+  function goSeat(A, fast) { endTalk(A); A.act = null; goTo(A, A.seat.x, A.seat.z, { mode: 'seat', rot: 0 }, fast, fast ? 'Bergegas ke meja' : 'Kembali ke meja'); }
+  function visit(A, s, dur) { goTo(A, s.x, s.z, { mode: s.sit ? 'sit' : 'stand', rot: s.rot, dur }, false, s.walk); reserve(A, s.k); A.act = { txt: s.txt }; }
+  function endTalk(A) { if (A.talk) { const T2 = A.talk; T2.over = true; A.talk = null; } }
+  function chat(A, t) {
+    const cands = Object.values(agents).filter(P => P !== A && !P.hero && P.status !== 'on' && P.mode === 'seat' && !P.talk && t > P.next - 8);
+    if (!cands.length) return false;
+    const P = pick(cands), mx = (A.seat.x + P.seat.x) / 2, mz = (A.seat.z + P.seat.z) / 2; let bi = -1, bd = 1e9;
+    CHAT.forEach((c, i) => { if (taken.has('obrol' + i)) return; const d = Math.hypot(c[0] - mx, c[1] - mz); if (d < bd) { bd = d; bi = i; } });
+    if (bi < 0) return false;
+    const c = CHAT[bi], dur = rnd(14, 22), lines = TALK.slice().sort(() => Math.random() - 0.5), talk = { a: A, b: P, lines, t0: 0, over: false };
+    goTo(A, c[0] - 0.6, c[1], { mode: 'stand', rot: Math.PI / 2, dur }, false, 'Menghampiri ' + P.a.n); reserve(A, 'obrol' + bi);
+    goTo(P, c[0] + 0.6, c[1], { mode: 'stand', rot: -Math.PI / 2, dur }, false, 'Ngobrol dengan ' + A.a.n);
+    A.talk = P.talk = talk; A.act = P.act = { txt: 'Ngobrol' }; P.next = t + dur + rnd(25, 40);
+    return true;
+  }
+  function decide(A, t) {
+    const awayN = Object.values(agents).filter(x => !x.hero && x.mode !== 'seat').length, r = Math.random();
+    A.next = t + rnd(16, 34);
+    if (calm || awayN >= 5 || r < 0.36) { A.amb = pick((AMB[A.a.id] || []).concat(AMB0)); return; }
+    let s = null;
+    if (r < 0.55) s = freeOf(COFFEE);
+    else if (r < 0.76) { if (chat(A, t)) return; }
+    else if (r < 0.84) s = freeOf(WINDOW);
+    else if (r < 0.91) s = freeOf(MEET);
+    else if (r < 0.96) s = freeOf(SOFA);
+    else { A.mode = 'stand'; A.poseT = 1; A.act = { txt: 'Peregangan', stretch: true }; A.actUntil = t + 5; return; }
+    if (s) visit(A, s, s.sit ? rnd(12, 20) : rnd(8, 14)); else A.amb = pick(AMB0);
+  }
+  function update(A, dt, t) {
+    const R = A.root;
+    A.pose += Math.sign(A.poseT - A.pose) * Math.min(Math.abs(A.poseT - A.pose), dt * 3);
+    let moving = false;
+    if (A.mode === 'walk' && A.pose > 0.95) {
+      if (A.path.length) {
+        const [tx, tz] = A.path[0], dx = tx - R.position.x, dz = tz - R.position.z, d = Math.hypot(dx, dz), step = A.speed * dt;
+        if (d <= step) { R.position.x = tx; R.position.z = tz; A.path.shift(); } else { R.position.x += dx / d * step; R.position.z += dz / d * step; }
+        if (d > 0.01) A.rotT = Math.atan2(dx, dz); A.walkPh += dt * A.speed * 4.4; moving = true;
+      } else {
+        const ar = A.arrive || { mode: 'stand', rot: 0 }; A.mode = ar.mode; A.rotT = ar.rot; A.poseT = ar.mode === 'stand' ? 1 : 0; A.actUntil = t + (ar.dur || 0);
+        if (ar.mode === 'seat') { A.next = Math.max(A.next, t + rnd(10, 24)); A.amb = pick((AMB[A.a.id] || []).concat(AMB0)); }
+      }
+    }
+    let dr = ((A.rotT || 0) - R.rotation.y) % (Math.PI * 2); if (dr > Math.PI) dr -= Math.PI * 2; if (dr < -Math.PI) dr += Math.PI * 2;
+    R.rotation.y += dr * Math.min(1, dt * 7);
+    R.position.y = 0.07 * A.pose + (moving ? Math.abs(Math.sin(A.walkPh)) * 0.035 : 0);
+    const sw = moving ? Math.sin(A.walkPh) : 0;
+    A.legs.forEach((L, i) => { L.rotation.x = -1.45 * (1 - A.pose) + (i ? -sw : sw) * 0.55 * A.pose; });
+    const talking = A.talk && A.mode === 'stand' && A.talk.t0 && speaker(A.talk, t) === A;
+    A.arms.forEach((m, i) => {
+      let x, z = (i ? 1 : -1) * 0.12;
+      if (A.mode === 'seat' && A.pose < 0.2) x = -1.05 + (A.status === 'on' && !calm ? Math.sin(t * 14 + i * 2 + A.ph) * 0.09 : Math.sin(t * 1.3 + A.ph) * 0.02);
+      else if (moving) x = (i ? sw : -sw) * 0.45;
+      else if (A.act && A.act.stretch && A.mode === 'stand') { x = -2.9; z = (i ? 1 : -1) * 0.25; }
+      else if (talking && i) x = -0.7 + Math.sin(t * 4) * 0.25;
+      else if (A.mode === 'sit') x = -0.6;
+      else x = -0.05 + Math.sin(t * 1.5 + A.ph + i) * 0.03;
+      m.rotation.x += (x - m.rotation.x) * Math.min(1, dt * 10); m.rotation.z = z;
+    });
+    if (A.hero) return;
+    if (A.status === 'on') { if (A.mode !== 'seat' && !(A.mode === 'walk' && A.arrive && A.arrive.mode === 'seat' && A.speed > 2)) goSeat(A, true); return; }
+    if (A.talk && A.talk.over && A.mode !== 'walk') A.actUntil = Math.min(A.actUntil, t + 1.2);
+    if ((A.mode === 'stand' || A.mode === 'sit') && t > A.actUntil) { if (A.act && A.act.stretch && Math.hypot(R.position.x - A.seat.x, R.position.z - A.seat.z) < 0.2) { A.mode = 'seat'; A.poseT = 0; A.act = null; A.next = t + rnd(12, 24); } else goSeat(A); }
+    else if (A.mode === 'seat' && t > A.next && !(A.status === 'done' && t < A.doneUntil)) decide(A, t);
+  }
+  function speaker(T2, t) { if (!T2.t0) return null; const i = Math.floor((t - T2.t0) / 2.8); return i % 2 ? T2.b : T2.a; }
+  function label(A, t) {
+    let txt, cls = 'amb';
+    if (A.hero) { txt = A.status === 'on' ? A.taskText : 'Memimpin'; cls = A.status === 'on' ? 'on' : ''; }
+    else if (A.status === 'on') { txt = A.mode === 'seat' ? A.taskText : A.walkTxt; cls = 'on'; }
+    else if (A.status === 'done' && t < A.doneUntil) { txt = A.taskText || 'Selesai'; cls = 'done'; }
+    else if (A.mode === 'walk') txt = A.walkTxt;
+    else if (A.talk && A.mode === 'stand') {
+      const T2 = A.talk; if (!T2.t0 && T2.a.mode === 'stand' && T2.b.mode === 'stand' && T2.a.talk === T2 && T2.b.talk === T2) T2.t0 = t;
+      const sp = speaker(T2, t); if (!sp) txt = 'Menunggu rekan'; else if (sp === A) { txt = T2.lines[Math.floor((t - T2.t0) / 2.8) % T2.lines.length]; cls = 'talk'; } else txt = 'Mendengarkan';
+    }
+    else if (A.act && A.mode !== 'seat') txt = A.act.txt;
+    else txt = A.amb;
+    if (txt !== A.shown) { A.bub.textContent = txt; A.shown = txt; }
+    if (cls !== A.cls) { A.el.className = 'o3l' + (cls ? ' ' + cls : ''); A.cls = cls; }
+  }
 
   /* ---------- kamera ---------- */
   let th = 0, ph = 0.92, rad = 48, aspect = 1;
@@ -203,19 +354,14 @@ window.makeOffice3D = function (host, AGENTS, opt) {
   cv.addEventListener('wheel', e => { e.preventDefault(); rad = Math.min(100, Math.max(14, rad * (1 + e.deltaY * 0.0012))); place(); }, { passive: false });
 
   /* ---------- animasi ---------- */
-  const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   let vis = true; new IntersectionObserver(es => { vis = es[0].isIntersecting; }).observe(host);
-  const tmp = new T.Vector3();
-  function frame(t) {
-    requestAnimationFrame(frame); if (!vis) return; const s = t / 1000;
-    for (const id in agents) {
-      const A = agents[id], on = A.state === 'on';
-      if (!calm) { A.pp.position.y = on ? Math.abs(Math.sin(s * 6 + A.ph)) * 0.04 : Math.sin(s * 1.4 + A.ph) * 0.012; A.arms.forEach((m, i) => { m.rotation.x = -1.05 + (on ? Math.sin(s * 14 + i * 2 + A.ph) * 0.09 : 0); }); }
-      A.ringM.opacity = on ? 0.55 + Math.sin(s * 4) * 0.25 : A.state === 'done' ? 0.55 : 0;
-    }
+  const tmp = new T.Vector3(); let last = performance.now() / 1000;
+  function frame(ms) {
+    requestAnimationFrame(frame); const t = ms / 1000, dt = Math.min(0.1, t - last); last = t; if (!vis) return;
+    for (const id in agents) { const A = agents[id]; update(A, dt, t); label(A, t); A.ringM.opacity = A.status === 'on' ? 0.55 + Math.sin(t * 4) * 0.25 : A.status === 'done' && t < A.doneUntil ? 0.55 : 0; }
     const w = host.clientWidth, h = host.clientHeight;
     for (const id in agents) {
-      const A = agents[id]; A.head.set(0, 2.55, -0.85); A.g.localToWorld(A.head); tmp.copy(A.head).project(cam);
+      const A = agents[id]; A.head.set(0, 2.45, 0); A.root.localToWorld(A.head); tmp.copy(A.head).project(cam);
       if (tmp.z > 1) { A.el.style.display = 'none'; continue; }
       A.el.style.display = ''; A.el.style.transform = `translate(${(tmp.x + 1) / 2 * w}px,${(1 - tmp.y) / 2 * h}px) translate(-50%,-100%)`;
     }
@@ -226,9 +372,10 @@ window.makeOffice3D = function (host, AGENTS, opt) {
 
   return {
     set(id, state, text) {
-      const A = agents[id]; if (!A) return; A.state = state;
-      A.el.className = 'o3l' + (state === 'on' ? ' on' : state === 'done' ? ' done' : '');
-      A.bub.textContent = text || (state === 'idle' ? 'Siaga' : '');
+      const A = agents[id]; if (!A) return; const t = performance.now() / 1000;
+      A.status = state; A.taskText = text || '';
+      if (state === 'done') A.doneUntil = t + 15;
+      if (state === 'on' && !A.hero && A.mode !== 'seat') goSeat(A, true);
       const col = state === 'on' ? 0xffc52a : state === 'done' ? 0x22b34c : 0x000000;
       A.lampM.emissive.setHex(col); A.lampM.emissiveIntensity = state === 'idle' ? 0 : 1.4;
       A.kb.emissive.setHex(state === 'on' ? 0x2a6bd8 : 0x000000); A.kb.emissiveIntensity = 0.8;
