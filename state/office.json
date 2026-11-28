@@ -5,22 +5,24 @@
    "text": "Siaga"
   },
   "bagas": {
-   "state": "on",
-   "text": "Meriset topik",
+   "state": "done",
+   "text": "Riset selesai",
    "at": "2026-11-28T18:52+09:00"
   },
   "nadia": {
-   "state": "on",
-   "text": "Meriset topik",
+   "state": "done",
+   "text": "Riset selesai",
    "at": "2026-11-28T18:52+09:00"
   },
   "rizky": {
-   "state": "idle",
-   "text": "Siaga"
+   "state": "on",
+   "text": "Menulis naskah",
+   "at": "2026-11-28T18:52+09:00"
   },
   "ratna": {
-   "state": "idle",
-   "text": "Siaga"
+   "state": "on",
+   "text": "Menulis naskah",
+   "at": "2026-11-28T18:52+09:00"
   },
   "dewi": {
    "state": "idle",
@@ -85,7 +87,7 @@
    "text": "Produksi 1128-0638 dimulai"
   }
  ],
- "updated": "2026-11-28T18:52:22+09:00",
+ "updated": "2026-11-28T18:52:28+09:00",
  "queue": [],
  "drafts": []
 }
