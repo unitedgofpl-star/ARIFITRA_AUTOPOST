@@ -189,7 +189,7 @@ def present(did):
     meta = json.loads((d / "meta.json").read_text(encoding="utf-8"))
     caps = json.loads((d / "caps.json").read_text(encoding="utf-8"))
     send_album(sorted(d.glob("slide-*.jpg")), f"Draf {did}: {meta.get('topik', '')}")
-    slot = next_slot(caps.get("jam"))
+    slot = datetime.fromisoformat(meta["jadwal"]) if meta.get("jadwal") else next_slot(caps.get("jam"))
     cek = "\n".join(f"• {c.get('butir', '')}" + (f" — {c.get('catatan')}" if c.get("catatan") else "") for c in caps.get("cek", []))
     send(f"INSTAGRAM\n{caps.get('ig', '')}\n\n— — —\nTHREADS\n{caps.get('threads', '')}\n\n— — —\nFACEBOOK\n{caps.get('fb', '')}\n\n— — —\nKomentar pertama: {caps.get('first', '')}")
     send(f"Cek fakta Bu Ratna:\n{cek or '• Tidak ada catatan'}\n\nSaran tayang: {slot.strftime('%d/%m %H:%M')} WIT.\n"
@@ -199,13 +199,13 @@ def present(did):
              [{"text": "Buang draf", "callback_data": f"del:{did}"}]])
 
 
-def produce(args, bahan, photo):
+def produce(args, bahan, photo, when=None):
     pilar, produk, words = "auto", "auto", []
-    for w in args.split():
+    for i, w in enumerate(args.split()):
         lw = w.lower()
-        if lw in ("desa", "kampung"):
+        if i == 0 and lw in ("desa", "kampung"):
             pilar = "desa"
-        elif lw == "ai":
+        elif i == 0 and lw == "ai":
             pilar = "ai"
         elif lw.startswith("jual:"):
             produk = {"naskah": "naskah", "cat": "cat", "tidak": "none"}.get(lw[5:], "auto")
@@ -233,7 +233,7 @@ def produce(args, bahan, photo):
     caps = brain.captions(res, deck, produk)
     for name, obj in (("research", res), ("deck", deck), ("caps", caps)):
         (d / f"{name}.json").write_text(json.dumps(obj, indent=1, ensure_ascii=False), encoding="utf-8")
-    (d / "meta.json").write_text(json.dumps({"topik": res.get("topik", ""), "pilar": deck.get("pilar"), "produk": produk, "at": now_wit().isoformat(timespec="minutes")}, ensure_ascii=False), encoding="utf-8")
+    (d / "meta.json").write_text(json.dumps({"topik": res.get("topik", ""), "pilar": deck.get("pilar"), "produk": produk, "at": now_wit().isoformat(timespec="minutes"), "jadwal": when.isoformat(timespec="minutes") if when else ""}, ensure_ascii=False), encoding="utf-8")
     setag(["yoga", "laras", "fajar", "hendra", "maya"], "done", "Caption siap"); setag(["ratna", "sinta"], "done", "Menunggu persetujuan")
     log(f"Draf {did} siap: {res.get('topik', '')}"); flush(f"Draf {did}")
     present(did)
@@ -260,7 +260,7 @@ def approve(did, when=None):
     d = draft_dir(did)
     meta = json.loads((d / "meta.json").read_text(encoding="utf-8"))
     caps = json.loads((d / "caps.json").read_text(encoding="utf-8"))
-    when = when or next_slot(caps.get("jam"))
+    when = when or (datetime.fromisoformat(meta["jadwal"]) if meta.get("jadwal") else next_slot(caps.get("jam")))
     folder = QUEUE / f"{when.strftime('%Y-%m-%d_%H%M')}_{slug(meta.get('topik'))}"
     folder.mkdir(parents=True, exist_ok=True)
     for i in range(1, 6):
@@ -326,6 +326,26 @@ def handle_message(m):
     reply = m.get("reply_to_message") or {}
     rtext = (reply.get("text") or reply.get("caption") or "").strip()
     if not text.startswith("/"):
+        ctx = rtext or office.get("last_reply", "")
+        if re.search(r"(jadwal|posting|post|terbit|carousel|karosel|caraosel|konten|buat|bikin|produksi|antrean|antrian|draf)", text, re.I):
+            it = brain.intent(text, ctx)
+            act = it.get("aksi")
+            if act == "produksi" and it.get("topik"):
+                send(f"Siap. Sinta meneruskan ke tim produksi:\n• Topik: {it['topik']}" + (f"\n• Jadwal diminta: {it['waktu']} WIT" if it.get("waktu") else ""))
+                photo = file_bytes((m.get("photo") or [])[-1]["file_id"]) if m.get("photo") else None
+                return produce(f"{it.get('pilar') or ''} {it['topik']}", it.get("bahan") or "", photo, parse_when((it.get("waktu") or "").split()))
+            if act == "setujui":
+                _, dr = listing()
+                if not dr:
+                    return send("Belum ada draf yang menunggu persetujuan. Minta saja: \"buatkan postingan tentang …\".")
+                return approve(dr[-1]["id"], parse_when((it.get("waktu") or "").split()))
+            if act == "terbitkan":
+                q, dr = listing()
+                if dr:
+                    return approve(dr[-1]["id"], now_wit()) or run_publish(manual=True)
+                return run_publish(manual=True)
+            if act == "antrean":
+                return handle_message({**m, "text": "/antrean"})
         agent = "sinta"
         for k, (n, r, _) in brain.AGENTS.items():
             if rtext.startswith(f"{n} · "):
@@ -386,6 +406,7 @@ def do_task(agent, task, ctx):
     tg("sendChatAction", {"chat_id": OWNER, "action": "typing"})
     setag([agent], "on", "Mengerjakan tugas"); flush(f"{n} bekerja")
     out = brain.agent_task(agent, task, ctx)
+    office["last_reply"] = f"{n}: {out}"[:3000]
     setag([agent], "done", "Tugas selesai"); log(f"{n}: {task[:60]}")
     send(f"{n} · {r}\n\n{out}")
 
@@ -418,10 +439,12 @@ def process(u):
 
 
 def safe(u):
+    global dirty
     try:
         process(u)
     except Exception as e:
         traceback.print_exc()
+        dirty = True
         for a in office["agents"].values():
             if a.get("state") == "on":
                 a.update(state="idle", text="Terkendala")
