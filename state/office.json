@@ -1,8 +1,9 @@
 {
  "agents": {
   "sinta": {
-   "state": "idle",
-   "text": "Siaga"
+   "state": "done",
+   "text": "Menunggu persetujuan",
+   "at": "2026-11-28T18:52+09:00"
   },
   "bagas": {
    "state": "done",
@@ -21,7 +22,7 @@
   },
   "ratna": {
    "state": "done",
-   "text": "Naskah siap",
+   "text": "Menunggu persetujuan",
    "at": "2026-11-28T18:52+09:00"
   },
   "dewi": {
@@ -30,28 +31,28 @@
    "at": "2026-11-28T18:52+09:00"
   },
   "yoga": {
-   "state": "on",
-   "text": "Menulis caption",
+   "state": "done",
+   "text": "Caption siap",
    "at": "2026-11-28T18:52+09:00"
   },
   "laras": {
-   "state": "on",
-   "text": "Menulis caption",
+   "state": "done",
+   "text": "Caption siap",
    "at": "2026-11-28T18:52+09:00"
   },
   "fajar": {
-   "state": "on",
-   "text": "Menulis caption",
+   "state": "done",
+   "text": "Caption siap",
    "at": "2026-11-28T18:52+09:00"
   },
   "maya": {
-   "state": "on",
-   "text": "Menulis caption",
+   "state": "done",
+   "text": "Caption siap",
    "at": "2026-11-28T18:52+09:00"
   },
   "hendra": {
-   "state": "on",
-   "text": "Menulis caption",
+   "state": "done",
+   "text": "Caption siap",
    "at": "2026-11-28T18:52+09:00"
   },
   "putri": {
@@ -60,6 +61,10 @@
   }
  },
  "log": [
+  {
+   "at": "28/11 18:52",
+   "text": "Draf 1128-1852 siap: Strategi Penyusunan Rencana Kerja Pemerintah Kampung Menjelang Akhir Tahun"
+  },
   {
    "at": "28/11 18:52",
    "text": "Produksi 1128-1852 dimulai"
@@ -93,7 +98,13 @@
    "text": "Produksi 1128-0638 dimulai"
   }
  ],
- "updated": "2026-11-28T18:52:44+09:00",
+ "updated": "2026-11-28T18:52:49+09:00",
  "queue": [],
- "drafts": []
+ "drafts": [
+  {
+   "id": "1128-1852",
+   "topic": "Strategi Penyusunan Rencana Kerja Pemerintah Kampung Menjelang Akhir Tahun",
+   "at": "2026-11-28T18:52+09:00"
+  }
+ ]
 }

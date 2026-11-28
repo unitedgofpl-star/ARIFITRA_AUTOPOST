@@ -1,0 +1,104 @@
+{
+ "pilar": "desa",
+ "cover": {
+  "title": "KADES",
+  "badge": "WAJIB PAHAM!",
+  "red": "EVALUASI AKHIR TAHUN",
+  "navy": "KUNCI ANGGARAN LANCAR !",
+  "sub": "Strategi penyusunan RKP desa/kampung menjelang akhir tahun anggaran."
+ },
+ "s2": {
+  "title": "LANGKAH:",
+  "pill": "PERCEPATAN TAHUNAN",
+  "pill2": "EVALUASI DANA DESA/KAMPUNG",
+  "lead": "Lakukan langkah terukur untuk memastikan administrasi akhir tahun tuntas.",
+  "label": "Di antaranya:",
+  "items": [
+   "**Evaluasi menyeluruh** penyerapan anggaran berjalan",
+   "Libatkan **Badan Musyawarah** dalam sidang pleno",
+   "Pastikan **dokumen keuangan** fisik non-fisik lengkap",
+   "Sinkronkan **program prioritas** hasil musyawarah",
+   "Manfaatkan **platform digital** pelaporan daerah"
+  ],
+  "note": "Koordinasi intensif dengan pendamping desa/kampung sangat menentukan."
+ },
+ "s3": {
+  "title": "FOKUS UTAMA:",
+  "line2": "SINKRONISASI DANA",
+  "line3": "TAHUN BERJALAN",
+  "lead": "Fokus pada ketepatan regulasi dan percepatan administrasi desa/kampung.",
+  "label": "Fokus pembahasan:",
+  "items": [
+   "Evaluasi penyerapan anggaran",
+   "Sidang pleno pertanggungjawaban",
+   "Kelengkapan dokumen keuangan",
+   "Sinkronisasi program prioritas",
+   "Rekonsiliasi data digital"
+  ],
+  "note": "Perhatikan batas waktu pengajuan dokumen sesuai aturan."
+ },
+ "s4": {
+  "title1": "PERSIAPAN ADMINISTRASI",
+  "title2": "TINDAKAN LAPANGAN",
+  "pill": "STRATEGI TEPAT !",
+  "left": {
+   "head1": "DALAM",
+   "head2": "PENGELOLAAN",
+   "items": [
+    {
+     "b": "Evaluasi",
+     "r": "penyerapan anggaran berjalan"
+    },
+    {
+     "b": "Lakukan",
+     "r": "sidang pleno pertanggungjawaban"
+    },
+    {
+     "b": "Lengkapi",
+     "r": "seluruh dokumen keuangan"
+    }
+   ]
+  },
+  "right": {
+   "head1": "DALAM",
+   "head2": "PELAKSANAAN PROGRAM",
+   "items": [
+    {
+     "b": "Sinkronkan",
+     "r": "program prioritas kampung"
+    },
+    {
+     "b": "Manfaatkan",
+     "r": "platform digital pelaporan"
+    },
+    {
+     "b": "Jaga",
+     "r": "koordinasi pendamping desa"
+    },
+    {
+     "b": "Patuhi",
+     "r": "regulasi pengadaan berlaku"
+    }
+   ]
+  },
+  "banner1": "Perencanaan matang hindari sanksi",
+  "banner2": "Tertib administrasi wujudkan transparan !"
+ },
+ "s5": {
+  "title": "PENUTUP",
+  "pill": "SIAPKAN DIRI",
+  "line2": "LAPORAN TEPAT",
+  "line3": "ANGGARAN TERSERAP",
+  "label": "Siapkan:",
+  "items": [
+   "Data penyerapan anggaran",
+   "Dokumen pertanggungjawaban",
+   "Hasil musyawarah kampung",
+   "Laporan kegiatan fisik",
+   "Koordinasi pendamping"
+  ],
+  "box1": "Pastikan seluruh tahapan sesuai regulasi yang berlaku.",
+  "box2": "Butuh referensi naskah dinas cepat dan tepat? Kunjungi **asngodigital**",
+  "accent": "asngodigital!"
+ }
+}
