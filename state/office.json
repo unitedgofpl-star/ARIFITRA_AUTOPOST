@@ -31,19 +31,19 @@
    "at": "2026-11-28T18:52+09:00"
   },
   "yoga": {
-   "state": "done",
-   "text": "Caption siap",
-   "at": "2026-11-28T18:52+09:00"
+   "state": "on",
+   "text": "Menerbitkan",
+   "at": "2026-11-28T18:53+09:00"
   },
   "laras": {
-   "state": "done",
-   "text": "Caption siap",
-   "at": "2026-11-28T18:52+09:00"
+   "state": "on",
+   "text": "Menerbitkan",
+   "at": "2026-11-28T18:53+09:00"
   },
   "fajar": {
-   "state": "done",
-   "text": "Caption siap",
-   "at": "2026-11-28T18:52+09:00"
+   "state": "on",
+   "text": "Menerbitkan",
+   "at": "2026-11-28T18:53+09:00"
   },
   "maya": {
    "state": "done",
@@ -102,7 +102,7 @@
    "text": "Produksi 1128-0638 dimulai"
   }
  ],
- "updated": "2026-11-28T18:53:38+09:00",
+ "updated": "2026-11-28T18:53:42+09:00",
  "queue": [
   {
    "folder": "2026-11-28_1853_strategi-penyusunan-rencana-kerja-pemeri",
