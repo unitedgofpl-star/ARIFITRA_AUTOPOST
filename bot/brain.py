@@ -61,7 +61,7 @@ def llm(prompt, big=False, want_json=False):
         return "".join(b.get("text", "") for b in r.get("content", []))
     gkey = os.environ.get("GEMINI_API_KEY", "").strip()
     if gkey:
-        model = os.environ.get("GEMINI_MODEL", "").strip() or "gemini-2.5-flash"
+        model = os.environ.get("GEMINI_MODEL", "").strip() or "gemini-3.8-flash"
         cfg = {"responseMimeType": "application/json"} if want_json else {}
         r = _post(f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent",
                   {"contents": [{"role": "user", "parts": [{"text": prompt}]}], "generationConfig": cfg},
@@ -136,4 +136,19 @@ def agent_task(agent_id, task, context=None):
     ctx = f"\n\nPesan sebelumnya yang dibalas Pak Arif:\n{context}" if context else ""
     return llm(f"Kamu adalah {n}, {r} di Kantor Virtual ASN Go Digital lantai 2, bekerja untuk Pak Arif (Direktur). {d} {BRIEF} "
                "Jawab dalam bahasa Indonesia, ringkas, praktis, langsung bisa dipakai, tanpa basa-basi pembuka. Format untuk Telegram: teks biasa, tanpa tabel markdown. "
+               "PENTING: kamu TIDAK bisa membuat, menjadwalkan, atau menerbitkan postingan sendiri, dan jangan pernah mengaku sudah melakukannya. "
+               "Bila Pak Arif ingin postingan dibuat/dijadwalkan, katakan cukup ketik misalnya: buatkan postingan tentang <topik> besok jam 07.30 — tim produksi akan mengerjakannya. "
                f"Kamu tidak bisa membuka internet: bila butuh data terbaru, minta Pak Arif menempelkan teks sumbernya. Hari ini {today()}.{ctx}\n\nTugas dari Pak Arif:\n{task}")
+
+
+def intent(text, ctx=""):
+    """Membaca maksud pesan bebas: produksi, setujui, terbitkan, antrean, atau obrolan."""
+    now = datetime.now(WIT)
+    return ask_json(
+        f"Kamu Sinta, resepsionis kantor konten. Hari ini {tgl(now, True)} WIT.\n"
+        f"Konteks pesan sebelumnya (mis. daftar ide dari rekan):\n{ctx[:2500] or '(tidak ada)'}\n\nPesan Pak Arif: {text}\n\n"
+        "Tentukan maksudnya. aksi:\n- produksi: minta dibuatkan/dijadwalkan postingan atau carousel baru (termasuk dari ide nomor sekian di konteks).\n"
+        "- setujui: menyetujui draf yang sudah ada. - terbitkan: minta draf terakhir diterbitkan sekarang.\n- antrean: tanya jadwal/antrean. - obrolan: selain itu.\n"
+        "Untuk produksi, isi topik selengkap mungkin (salin judul ide dari konteks bila merujuk nomor). Bila ada beberapa ide diminta, ambil yang pertama disebut.\n"
+        "waktu: tanggal-jam tayang yang diminta dalam format YYYY-MM-DD HH:MM (zona WIT), atau 'sekarang', atau kosong bila tidak disebut. 'pagi' tanpa jam = 07:30, 'sore' = 16:30, 'malam' = 19:30.\n"
+        'Balas HANYA JSON: {"aksi":"produksi|setujui|terbitkan|antrean|obrolan","pilar":"desa|ai|","topik":"","waktu":""}')
