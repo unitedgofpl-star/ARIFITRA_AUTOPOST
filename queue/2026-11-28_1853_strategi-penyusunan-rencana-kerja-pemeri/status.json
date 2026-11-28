@@ -1,7 +1,7 @@
 {
   "instagram": {
-    "error": "HTTP 400 dari graph.instagram.com: {\"error\":{\"message\":\"Invalid OAuth access token - Cannot parse access token\",\"type\":\"OAuthException\",\"code\":190,\"fbtrace_id\":\"Ap_5TfbLFqrgW0epv5JkR5j\"}}",
-    "at": "2026-11-28T11:31:07.424245+00:00"
+    "error": "HTTP 400 dari graph.instagram.com: {\"error\":{\"message\":\"Invalid OAuth access token - Cannot parse access token\",\"type\":\"OAuthException\",\"code\":190,\"fbtrace_id\":\"AWVwoPw8AqPo75KbU3qZqaM\"}}",
+    "at": "2026-11-28T11:46:06.704577+00:00"
   },
   "threads": {
     "id": "17901118863676753",
