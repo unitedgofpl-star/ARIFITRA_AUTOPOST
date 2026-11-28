@@ -1,8 +1,8 @@
 {
  "agents": {
   "sinta": {
-   "state": "done",
-   "text": "Tugas selesai",
+   "state": "on",
+   "text": "Mengerjakan tugas",
    "at": "2026-11-28T14:28+09:00"
   },
   "bagas": {
@@ -70,7 +70,7 @@
    "text": "Produksi 1128-0638 dimulai"
   }
  ],
- "updated": "2026-11-28T14:28:00+09:00",
+ "updated": "2026-11-28T14:28:55+09:00",
  "queue": [],
  "drafts": []
 }
