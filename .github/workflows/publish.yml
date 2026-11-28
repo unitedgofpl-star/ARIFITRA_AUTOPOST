@@ -1,19 +1,20 @@
 name: Robot Posting
 
+# Dipanggil Cloudflare setiap 15 menit, oleh bot (/terbitkan), atau manual.
 on:
-  schedule:
-    - cron: "*/30 * * * *"   # cek antrean tiap 30 menit (jadwal GitHub bisa telat beberapa menit)
   workflow_dispatch:
     inputs:
       dry_run:
         description: "Uji coba tanpa posting (1 = ya)"
         default: "0"
+  schedule:
+    - cron: "41 * * * *"   # cadangan bila Cloudflare belum dipasang
 
 permissions:
   contents: write
 
 concurrency:
-  group: robot-kantor
+  group: robot-posting
   cancel-in-progress: false
 
 jobs:
@@ -32,7 +33,10 @@ jobs:
           THREADS_TOKEN: ${{ secrets.THREADS_TOKEN }}
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
           FB_PAGE_TOKEN: ${{ secrets.FB_PAGE_TOKEN }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_OWNER_ID: ${{ secrets.TELEGRAM_OWNER_ID }}
           GRAPH_VERSION: ${{ vars.GRAPH_VERSION }}
+          IG_API_HOST: ${{ vars.IG_API_HOST }}
           DRY_RUN: ${{ github.event.inputs.dry_run }}
         run: python scripts/publish.py
       - name: Simpan catatan status
@@ -41,4 +45,6 @@ jobs:
           git config user.name "robot-posting"
           git config user.email "robot-posting@users.noreply.github.com"
           git add queue/*/status.json 2>/dev/null || true
-          git diff --cached --quiet || (git commit -m "Catat status posting" && git push)
+          git diff --cached --quiet && exit 0
+          git commit -m "Catat status posting"
+          for i in 1 2 3; do git pull --rebase --autostash && git push && break; sleep 3; done
