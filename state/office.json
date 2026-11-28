@@ -2,8 +2,8 @@
  "agents": {
   "sinta": {
    "state": "done",
-   "text": "Menunggu persetujuan",
-   "at": "2026-11-28T18:52+09:00"
+   "text": "Terjadwal 28/11 18:53",
+   "at": "2026-11-28T18:53+09:00"
   },
   "bagas": {
    "state": "done",
@@ -62,6 +62,10 @@
  },
  "log": [
   {
+   "at": "28/11 18:53",
+   "text": "Disetujui: Strategi Penyusunan Rencana Kerja Pemerintah Kampung Menjelang Akhir Tahun → 28/11 18:53 WIT"
+  },
+  {
    "at": "28/11 18:52",
    "text": "Draf 1128-1852 siap: Strategi Penyusunan Rencana Kerja Pemerintah Kampung Menjelang Akhir Tahun"
   },
@@ -98,13 +102,15 @@
    "text": "Produksi 1128-0638 dimulai"
   }
  ],
- "updated": "2026-11-28T18:52:49+09:00",
- "queue": [],
- "drafts": [
+ "updated": "2026-11-28T18:53:38+09:00",
+ "queue": [
   {
-   "id": "1128-1852",
+   "folder": "2026-11-28_1853_strategi-penyusunan-rencana-kerja-pemeri",
+   "publish_at": "2026-11-28T18:53:38+09:00",
    "topic": "Strategi Penyusunan Rencana Kerja Pemerintah Kampung Menjelang Akhir Tahun",
-   "at": "2026-11-28T18:52+09:00"
+   "status": "terjadwal",
+   "done": []
   }
- ]
+ ],
+ "drafts": []
 }
